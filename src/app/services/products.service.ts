@@ -15,12 +15,15 @@ export class ProductsService {
   }
 
   loadProducts() {
-    this.http
-      .get("https://angular-html-f9bea.firebaseio.com/productos_idx.json")
-      .subscribe((resp: Product[]) => {
-        this.products = resp;
-        this.loading = false;
-      });
+    return new Promise((resolve, reject) => {
+      this.http
+        .get("https://angular-html-f9bea.firebaseio.com/productos_idx.json")
+        .subscribe((resp: Product[]) => {
+          this.products = resp;
+          this.loading = false;
+          resolve();
+        });
+    });
   }
 
   getProduct(id: string) {
@@ -30,10 +33,30 @@ export class ProductsService {
   }
 
   searchProduct(term: string) {
-    this.productsFilter = this.products.filter(product => {
-      return true;
-    });
+    if (this.products.length === 0) {
+      this.loadProducts().then(() => {
+        this.filterProducts(term);
+      });
+    } else {
+      this.filterProducts(term);
+    }
 
-    console.log(this.productsFilter);
+    // this.productsFilter = this.products.filter(product => {
+    //   return true;
+    // });
+  }
+
+  filterProducts(term: string) {
+    this.productsFilter = [];
+    term = term.toLowerCase();
+    this.products.forEach(product => {
+      const lowerTitle = product.titulo.toLowerCase();
+      if (
+        product.categoria.indexOf(term) >= 0 ||
+        lowerTitle.indexOf(term) >= 0
+      ) {
+        this.productsFilter.push(product);
+      }
+    });
   }
 }
